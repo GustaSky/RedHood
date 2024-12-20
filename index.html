@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RedHood</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="retangulo-topo">
+        <div class="overlay"></div>
+        <div class="user-container">
+            <i class="icone fa-solid fa-user"></i>
+            <span class="user-text">Faça seu login<br>ou se cadastre aqui!</span>
+            <div class="login-options">
+                <div class="option">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    <span>Fazer Login</span>
+                </div>
+                <div class="option">
+                    <i class="fa-solid fa-user-plus"></i>
+                    <span>Cadastrar-se</span>
+                </div>
+                <div class="option logout-option" style="display: none;">
+                    <i class="fa-solid fa-sign-out-alt"></i>
+                    <span>Sair</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="form-overlay"></div>
+
+    <div class="login-form">
+        <div class="form-header">
+            <h2>Login</h2>
+            <i class="fa-solid fa-times close-form"></i>
+        </div>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="loginUsername">Nome de usuário</label>
+                <input type="text" id="loginUsername" required>
+            </div>
+            <div class="form-group">
+                <label for="loginPassword">Senha</label>
+                <input type="password" id="loginPassword" required>
+            </div>
+            <button type="submit">Entrar</button>
+        </form>
+    </div>
+
+    <div class="register-form">
+        <div class="form-header">
+            <h2>Cadastro</h2>
+            <i class="fa-solid fa-times close-form"></i>
+        </div>
+        <form id="registerForm">
+            <div class="form-group">
+                <label for="registerUsername">Nome de usuário</label>
+                <input type="text" id="registerUsername">
+            </div>
+            <div class="form-group">
+                <label for="registerEmail">E-mail</label>
+                <input type="email" id="registerEmail">
+            </div>
+            <div class="form-group">
+                <label for="registerPassword">Senha</label>
+                <input type="password" id="registerPassword">
+                <div class="password-strength">
+                    <div class="strength-meter"></div>
+                    <div class="strength-text"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="registerBirthdate">Data de nascimento</label>
+                <input type="date" id="registerBirthdate">
+            </div>
+            <button type="submit">Cadastrar</button>
+        </form>
+    </div>
+    <script src="js/script.js"></script>
+    <div class="error-popup">
+        <div class="error-content">
+            <h3>Erro</h3>
+            <p id="error-message">Você precisa ter 18 anos ou mais para se cadastrar.</p>
+            <button class="error-close">OK</button>
+        </div>
+    </div>
+    <div class="success-popup" id="login-success">
+        <div class="success-content">
+            <img src="imgs/GcPCZfHboAA1lBC-removebg-preview.png" alt="Success" class="success-icon">
+            <h3>Login Realizado!</h3>
+            <p>Bem-vindo de volta!</p>
+        </div>
+    </div>
+</body>
+</html>
