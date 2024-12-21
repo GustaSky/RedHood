@@ -34,6 +34,8 @@ let currentUser = null;
 const successPopup = document.querySelector('.success-popup');
 
 // Adicione no início do arquivo
+console.log('Script carregado');
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM carregado');
     console.log('Form de login:', document.getElementById('loginForm'));
@@ -354,11 +356,24 @@ function showRegisterSuccess() {
 
 // No evento de login
 document.getElementById('loginForm').addEventListener('submit', function(e) {
-    console.log('Tentativa de login');
     e.preventDefault();
+    
+    // Verifica o reCAPTCHA
+    const response = grecaptcha.getResponse();
+    if (!response) {
+        showError('Por favor, complete o reCAPTCHA.');
+        return false;
+    }
+    
+    console.log('Form submetido');
+    e.preventDefault();
+    e.stopPropagation();
     
     const username = document.getElementById('loginUsername').value.trim();
     const password = document.getElementById('loginPassword').value;
+    
+    console.log('Username:', username);
+    console.log('Tentando fazer login...');
     
     if (!username || !password) {
         showError('Por favor, preencha todos os campos.');
@@ -370,7 +385,20 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
     loginForm.style.display = 'none';
     
     // Mostra o popup de sucesso
-    showLoginSuccess(username);
+    const successPopup = document.querySelector('#login-success');
+    if (successPopup) {
+        console.log('Popup encontrado');
+        successPopup.style.display = 'flex';
+        
+        setTimeout(() => {
+            console.log('Escondendo popup');
+            successPopup.style.display = 'none';
+            console.log('Atualizando UI');
+            updateUIAfterLogin(username);
+        }, 2000);
+    } else {
+        console.log('Popup não encontrado');
+    }
     
     // Limpa os campos
     document.getElementById('loginForm').reset();
@@ -380,6 +408,13 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
 // No evento de cadastro
 document.getElementById('registerForm').addEventListener('submit', function(e) {
     e.preventDefault();
+    
+    // Verifica o reCAPTCHA
+    const response = grecaptcha.getResponse();
+    if (!response) {
+        showError('Por favor, complete o reCAPTCHA.');
+        return false;
+    }
     
     // ... todas as validações existentes ...
     

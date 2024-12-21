@@ -340,7 +340,7 @@ button[type="submit"]:disabled {
     display: none;
     justify-content: center;
     align-items: center;
-    z-index: 11;
+    z-index: 999;
 }
 
 .success-content {
@@ -351,6 +351,7 @@ button[type="submit"]:disabled {
     max-width: 300px;
     font-family: 'Roboto', sans-serif;
     animation: fadeIn 0.5s ease;
+    z-index: 1000;
 }
 
 .success-content h3 {
@@ -385,4 +386,10 @@ button[type="submit"]:disabled {
 
 #register-success {
     z-index: 12;
+}
+
+.g-recaptcha {
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: center;
 }
