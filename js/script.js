@@ -224,14 +224,12 @@ function showForm(form) {
 
 // Função para esconder formulário
 function hideForm(form) {
+    // Esconde o overlay e o formulário
     formOverlay.style.display = 'none';
-    form.style.display = 'none';
+    loginForm.style.display = 'none';
+    registerForm.style.display = 'none';
     
-    // Reseta o reCAPTCHA se existir
-    if (typeof grecaptcha !== 'undefined') {
-        grecaptcha.reset();
-    }
-    
+    // Reseta os formulários
     resetForms();
 }
 
@@ -254,6 +252,10 @@ function resetForms() {
     // Reseta o indicador de força da senha
     strengthMeter.className = 'strength-meter';
     strengthText.textContent = '';
+    
+    // Remove mensagens de erro
+    const errorMessages = document.querySelectorAll('.field-error');
+    errorMessages.forEach(msg => msg.remove());
     
     // Força uma reavaliação dos campos
     validateAllFields();
@@ -364,82 +366,36 @@ function showRegisterSuccess() {
 document.getElementById('loginForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
-    // Verifica o reCAPTCHA
-    const response = grecaptcha.getResponse();
-    if (!response) {
-        showError('Por favor, complete o reCAPTCHA.');
-        return false;
-    }
-    
-    console.log('Form submetido');
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const username = document.getElementById('loginUsername').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    
-    console.log('Username:', username);
-    console.log('Tentando fazer login...');
-    
-    if (!username || !password) {
-        showError('Por favor, preencha todos os campos.');
-        return false;
-    }
-    
-    // Esconde o formulário
-    formOverlay.style.display = 'none';
-    loginForm.style.display = 'none';
-    
-    // Mostra o popup de sucesso
-    const successPopup = document.querySelector('#login-success');
-    if (successPopup) {
-        console.log('Popup encontrado');
-        successPopup.style.display = 'flex';
+    // Execute o reCAPTCHA v3
+    grecaptcha.execute('6Lf-dqIqAAAAANWYuVsvOhN9kxu7f0QlFAOyvBmT', {action: 'login'})
+    .then(function(token) {
+        const username = document.getElementById('loginUsername').value.trim();
+        const password = document.getElementById('loginPassword').value;
         
-        // Reseta o reCAPTCHA
-        grecaptcha.reset();
+        if (!username || !password) {
+            showError('Por favor, preencha todos os campos.');
+            return false;
+        }
         
-        setTimeout(() => {
-            console.log('Escondendo popup');
-            successPopup.style.display = 'none';
-            console.log('Atualizando UI');
-            updateUIAfterLogin(username);
-        }, 2000);
-    } else {
-        console.log('Popup não encontrado');
-    }
-    
-    // Limpa os campos
-    document.getElementById('loginForm').reset();
-    return false;
+        formOverlay.style.display = 'none';
+        loginForm.style.display = 'none';
+        showLoginSuccess(username);
+    });
 });
 
-// No evento de cadastro
+// No evento de registro
 document.getElementById('registerForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
-    // Verifica o reCAPTCHA
-    const response = grecaptcha.getResponse();
-    if (!response) {
-        showError('Por favor, complete o reCAPTCHA.');
-        return false;
-    }
-    
-    // ... todas as validações existentes ...
-    
-    // Se chegou aqui, tudo está válido
-    formOverlay.style.display = 'none';
-    registerForm.style.display = 'none';
-    
-    // Reseta o reCAPTCHA
-    grecaptcha.reset();
-    
-    // Mostra sucesso
-    showRegisterSuccess();
-    
-    // Limpa os campos
-    resetForms();
-    return false;
+    // Execute o reCAPTCHA v3
+    grecaptcha.execute('6Lf-dqIqAAAAANWYuVsvOhN9kxu7f0QlFAOyvBmT', {action: 'register'})
+    .then(function(token) {
+        // ... suas validações existentes ...
+        
+        formOverlay.style.display = 'none';
+        registerForm.style.display = 'none';
+        showRegisterSuccess();
+    });
 });
 
 // Fechar erro ao clicar no botão OK
