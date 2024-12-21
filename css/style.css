@@ -81,8 +81,8 @@ body {
 .login-options {
     position: absolute;
     top: 100%;
-    right: 0;
-    transform: none;
+    left: 50%;
+    transform: translateX(-50%);
     background-color: #dee7e7;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
