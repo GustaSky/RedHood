@@ -33,6 +33,12 @@ let currentUser = null;
 // Adicione no início com as outras constantes
 const successPopup = document.querySelector('.success-popup');
 
+// Adicione no início do arquivo
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM carregado');
+    console.log('Form de login:', document.getElementById('loginForm'));
+});
+
 // Função para atualizar a interface após o login
 function updateUIAfterLogin(username) {
     isLoggedIn = true;
@@ -348,6 +354,7 @@ function showRegisterSuccess() {
 
 // No evento de login
 document.getElementById('loginForm').addEventListener('submit', function(e) {
+    console.log('Tentativa de login');
     e.preventDefault();
     
     const username = document.getElementById('loginUsername').value.trim();
@@ -362,7 +369,7 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
     formOverlay.style.display = 'none';
     loginForm.style.display = 'none';
     
-    // Mostra sucesso e atualiza interface
+    // Mostra o popup de sucesso
     showLoginSuccess(username);
     
     // Limpa os campos
