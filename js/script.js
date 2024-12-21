@@ -226,7 +226,13 @@ function showForm(form) {
 function hideForm(form) {
     formOverlay.style.display = 'none';
     form.style.display = 'none';
-    resetForms();  // Adiciona reset dos formulários
+    
+    // Reseta o reCAPTCHA se existir
+    if (typeof grecaptcha !== 'undefined') {
+        grecaptcha.reset();
+    }
+    
+    resetForms();
 }
 
 // Função para mostrar erro
@@ -390,6 +396,9 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
         console.log('Popup encontrado');
         successPopup.style.display = 'flex';
         
+        // Reseta o reCAPTCHA
+        grecaptcha.reset();
+        
         setTimeout(() => {
             console.log('Escondendo popup');
             successPopup.style.display = 'none';
@@ -421,6 +430,9 @@ document.getElementById('registerForm').addEventListener('submit', function(e) {
     // Se chegou aqui, tudo está válido
     formOverlay.style.display = 'none';
     registerForm.style.display = 'none';
+    
+    // Reseta o reCAPTCHA
+    grecaptcha.reset();
     
     // Mostra sucesso
     showRegisterSuccess();
