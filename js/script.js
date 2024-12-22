@@ -8,15 +8,12 @@ const loginForm = document.querySelector('.login-form');
 const registerForm = document.querySelector('.register-form');
 const formOverlay = document.querySelector('.form-overlay');
 const overlay = document.querySelector('.overlay');
+const passwordInput = document.getElementById('registerPassword');
+const strengthMeter = document.querySelector('.strength-meter');
+const strengthText = document.querySelector('.strength-text');
 
 // Event Listeners
 document.addEventListener('DOMContentLoaded', function() {
-    // Inicialização
-    initializeEventListeners();
-    checkAuth();
-});
-
-function initializeEventListeners() {
     // Menu de Login/Registro
     userContainer.addEventListener('click', function(e) {
         e.stopPropagation();
@@ -32,32 +29,127 @@ function initializeEventListeners() {
         }
     });
 
-    // Click nas opções
-    document.querySelectorAll('.login-options .option').forEach(option => {
-        option.addEventListener('click', handleOptionClick);
+    // Formulário de Login
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        try {
+            const email = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!email || !password) {
+                showCustomError('Ops!', 'Por favor, preencha todos os campos.');
+                return;
+            }
+
+            const user = await handleLogin(email, password);
+            hideAllForms();
+            showLoginSuccess(user.nome);
+        } catch (error) {
+            showCustomError('Eita!', error.message);
+        }
     });
 
-    // Formulários
-    document.getElementById('loginForm').addEventListener('submit', handleLoginSubmit);
-    document.getElementById('registerForm').addEventListener('submit', handleRegisterSubmit);
-    document.getElementById('recoveryForm').addEventListener('submit', handleRecoverySubmit);
-    document.getElementById('newPasswordForm').addEventListener('submit', handleNewPasswordSubmit);
+    // Formulário de Registro
+    document.getElementById('registerForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        try {
+            const userData = {
+                username: document.getElementById('registerUsername').value.trim(),
+                email: document.getElementById('registerEmail').value.trim(),
+                password: document.getElementById('registerPassword').value,
+                birthdate: document.getElementById('registerBirthdate').value
+            };
 
-    // Outros eventos
-    document.getElementById('forgotPasswordLink').addEventListener('click', handleForgotPassword);
-    document.querySelector('.logout-option').addEventListener('click', handleLogout);
+            const user = await handleRegister(userData);
+            hideAllForms();
+            
+            if (user.pin) {
+                showPinSuccess(user.pin);
+            } else {
+                showRegisterSuccess();
+            }
+        } catch (error) {
+            showCustomError('Puts!', error.message);
+        }
+    });
+
+    // Recuperação de senha
+    document.getElementById('forgotPasswordLink').addEventListener('click', function(e) {
+        e.preventDefault();
+        hideAllForms();
+        document.querySelector('.recovery-form').style.display = 'block';
+        formOverlay.style.display = 'block';
+    });
+
+    // Força da senha
+    passwordInput.addEventListener('input', function() {
+        const strength = checkPasswordStrength(this.value);
+        updatePasswordStrength(strength);
+        validateRegisterForm();
+    });
+
+    // Click nas opções
+    document.querySelectorAll('.login-options .option').forEach(option => {
+        option.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const optionText = this.querySelector('span').textContent;
+            
+            hideMenu();
+
+            if (optionText === 'Fazer Login') {
+                formOverlay.style.display = 'block';
+                loginForm.style.display = 'block';
+            } 
+            else if (optionText === 'Cadastrar-se') {
+                formOverlay.style.display = 'block';
+                registerForm.style.display = 'block';
+            }
+            else if (optionText === 'Sair') {
+                handleLogout();
+            }
+        });
+    });
+
+    // Botões de fechar
     document.querySelectorAll('.close-form').forEach(btn => {
         btn.addEventListener('click', hideAllForms);
     });
-}
 
-// Função para esconder o menu
+    // Logout
+    document.querySelector('.logout-option').addEventListener('click', handleLogout);
+
+    checkAuth();
+
+    // Adicione após o DOMContentLoaded
+    document.querySelector('#user-pin').addEventListener('click', function() {
+        navigator.clipboard.writeText(this.textContent).then(() => {
+            const feedback = document.querySelector('#copy-feedback');
+            feedback.style.opacity = '1';
+            setTimeout(() => {
+                feedback.style.opacity = '0';
+            }, 2000);
+        });
+    });
+
+    // Adicione um event listener para o botão OK do popup do PIN
+    document.querySelector('.pin-ok-button').addEventListener('click', function() {
+        const pinPopup = document.querySelector('#pin-success');
+        pinPopup.style.display = 'none';
+        
+        // Mostrar formulário de login
+        formOverlay.style.display = 'block';
+        loginForm.style.display = 'block';
+    });
+});
+
+// Funções Auxiliares
 function hideMenu() {
     loginOptions.classList.remove('active');
     overlay.classList.remove('active');
 }
 
-// Função para esconder todos os formulários
 function hideAllForms() {
     formOverlay.style.display = 'none';
     loginForm.style.display = 'none';
@@ -66,57 +158,6 @@ function hideAllForms() {
     document.querySelector('.new-password-form').style.display = 'none';
 }
 
-// Função para lidar com o clique nas opções do menu
-function handleOptionClick(e) {
-    console.log('Opção clicada:', this.querySelector('span').textContent);
-    e.stopPropagation();
-    const optionText = this.querySelector('span').textContent;
-    
-    hideMenu();
-
-    if (optionText === 'Fazer Login') {
-        formOverlay.style.display = 'block';
-        loginForm.style.display = 'block';
-    } 
-    else if (optionText === 'Cadastrar-se') {
-        formOverlay.style.display = 'block';
-        registerForm.style.display = 'block';
-    }
-    else if (optionText === 'Sair') {
-        handleLogout();
-    }
-}
-
-// Função para lidar com o submit do login
-async function handleLoginSubmit(e) {
-    e.preventDefault();
-    
-    try {
-        const email = document.getElementById('loginUsername').value.trim();
-        const password = document.getElementById('loginPassword').value;
-        
-        if (!email || !password) {
-            showCustomError('Ops!', 'Por favor, preencha todos os campos.');
-            return;
-        }
-
-        const user = await handleLogin(email, password);
-        hideAllForms();
-        showLoginSuccess(user.nome);
-    } catch (error) {
-        showCustomError('Eita!', error.message);
-    }
-}
-
-// Função para lidar com o clique em "Esqueceu a senha?"
-function handleForgotPassword(e) {
-    e.preventDefault();
-    hideAllForms();
-    document.querySelector('.recovery-form').style.display = 'block';
-    formOverlay.style.display = 'block';
-}
-
-// Adicione estas funções que podem estar faltando
 function showCustomError(title, message) {
     const errorPopup = document.querySelector('#error-custom');
     const errorTitle = errorPopup.querySelector('h3');
@@ -139,6 +180,34 @@ function showLoginSuccess(username) {
         successPopup.style.display = 'none';
         updateUIAfterLogin(username);
     }, 2000);
+}
+
+function showRegisterSuccess() {
+    const successPopup = document.querySelector('#login-success');
+    const title = successPopup.querySelector('h3');
+    const message = successPopup.querySelector('p');
+    
+    title.textContent = 'Cadastro Realizado!';
+    message.textContent = 'Seja bem-vindo!';
+    successPopup.style.display = 'flex';
+    
+    setTimeout(() => {
+        successPopup.style.display = 'none';
+    }, 2000);
+}
+
+function showPinSuccess(pin) {
+    const pinPopup = document.querySelector('#pin-success');
+    const pinText = pinPopup.querySelector('#user-pin');
+    const copyFeedback = pinPopup.querySelector('#copy-feedback');
+    
+    pinText.textContent = pin;
+    copyFeedback.style.opacity = '0';
+    pinPopup.style.display = 'flex';
+
+    // Adiciona efeito hover no PIN
+    pinText.style.cursor = 'pointer';
+    pinText.title = 'Clique para copiar';
 }
 
 function updateUIAfterLogin(username) {
@@ -171,9 +240,134 @@ function handleLogout() {
     hideMenu();
 }
 
+function checkPasswordStrength(password) {
+    let strength = 0;
+    const checks = {
+        length: password.length >= 8,
+        lowercase: /[a-z]/.test(password),
+        uppercase: /[A-Z]/.test(password),
+        numbers: /[0-9]/.test(password),
+        special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+    };
+    
+    // Conta quantos critérios foram atendidos
+    strength = Object.values(checks).filter(Boolean).length;
+    
+    return strength;
+}
+
+function updatePasswordStrength(strength) {
+    strengthMeter.className = 'strength-meter';
+    strengthText.textContent = '';
+    
+    if (strength > 0) {
+        const strengthClasses = ['weak', 'medium', 'strong', 'very-strong'];
+        const strengthTexts = ['Fraca', 'Média', 'Forte', 'Muito Forte'];
+        
+        const index = Math.min(strength - 1, 3);
+        strengthMeter.classList.add(strengthClasses[index]);
+        strengthText.textContent = strengthTexts[index];
+    }
+}
+
+function checkAuth() {
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user'));
+    
+    if (token && user) {
+        updateUIAfterLogin(user.nome);
+    }
+}
+
+// Função para validar formulário de registro
+function validateRegisterForm() {
+    const nome = document.getElementById('registerUsername').value.trim();
+    const email = document.getElementById('registerEmail').value.trim();
+    const senha = document.getElementById('registerPassword').value;
+    const dataNascimento = document.getElementById('registerBirthdate').value;
+    
+    // Validação de idade
+    const idade = calculateAge(dataNascimento);
+    const ageError = document.querySelector('.age-error');
+    if (dataNascimento && idade < 18) {
+        ageError.style.display = 'block';
+    } else {
+        ageError.style.display = 'none';
+    }
+    
+    const submitButton = document.querySelector('#registerForm button[type="submit"]');
+    const isValid = 
+        nome.length > 0 && 
+        email.length > 0 && 
+        isValidEmail(email) && 
+        senha.length > 0 && 
+        checkPasswordStrength(senha) >= 2 && // Reduzido para 2 para facilitar testes
+        dataNascimento && 
+        idade >= 18;
+    
+    submitButton.disabled = !isValid;
+    submitButton.classList.toggle('disabled', !isValid);
+}
+
+// Função para validar email
+function isValidEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+// Função para calcular idade
+function calculateAge(birthdate) {
+    const today = new Date();
+    const birthDate = new Date(birthdate);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+    }
+    return age;
+}
+
+// Função para validar formulário de login
+function validateLoginForm() {
+    const email = document.getElementById('loginUsername').value.trim();
+    const senha = document.getElementById('loginPassword').value;
+    
+    const submitButton = document.querySelector('#loginForm button[type="submit"]');
+    const isValid = email && senha && isValidEmail(email);
+    
+    submitButton.disabled = !isValid;
+    submitButton.classList.toggle('disabled', !isValid);
+}
+
+// Função para validar formulário de recuperação
+function validateRecoveryForm() {
+    const email = document.getElementById('recoveryEmail').value.trim();
+    const pin = document.getElementById('recoveryPin').value.trim();
+    
+    const submitButton = document.querySelector('#recoveryForm button[type="submit"]');
+    const isValid = email && isValidEmail(email) && pin && pin.length === 6;
+    
+    submitButton.disabled = !isValid;
+    submitButton.classList.toggle('disabled', !isValid);
+}
+
+// Função para validar formulário de nova senha
+function validateNewPasswordForm() {
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    
+    const submitButton = document.querySelector('#newPasswordForm button[type="submit"]');
+    const isValid = 
+        newPassword && 
+        confirmPassword && 
+        newPassword === confirmPassword && 
+        checkPasswordStrength(newPassword) >= 3;
+    
+    submitButton.disabled = !isValid;
+    submitButton.classList.toggle('disabled', !isValid);
+}
+
 // Função para login
 async function handleLogin(email, password) {
-    console.log('Tentando login com:', email);
     try {
         const response = await fetch(`${API_URL}/users/login`, {
             method: 'POST',
@@ -202,17 +396,33 @@ async function handleLogin(email, password) {
     }
 }
 
-function checkAuth() {
-    const token = localStorage.getItem('token');
-    const user = JSON.parse(localStorage.getItem('user'));
-    
-    if (token && user) {
-        updateUIAfterLogin(user.nome);
+// Função para registro
+async function handleRegister(userData) {
+    try {
+        const formattedData = {
+            nome: userData.username,
+            email: userData.email,
+            senha: userData.password,
+            data_nascimento: userData.birthdate
+        };
+
+        const response = await fetch(`${API_URL}/users/register`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formattedData)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || 'Erro ao cadastrar');
+        }
+
+        return data;
+    } catch (error) {
+        console.error('Erro:', error);
+        throw error;
     }
 }
-
-// Teste a conexão com o backend
-fetch(`${API_URL}/users/health`)
-    .then(response => response.json())
-    .then(data => console.log('Backend status:', data))
-    .catch(error => console.error('Erro ao conectar com backend:', error));
