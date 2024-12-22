@@ -62,14 +62,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 birthdate: document.getElementById('registerBirthdate').value
             };
 
-            const result = await handleRegister(userData);
+            const user = await handleRegister(userData);
             hideAllForms();
-
-            if (result.pin) {
-                showPinSuccess(result.pin);
-            } else {
-                showRegisterSuccess();
-            }
+            
+            // O PIN será mostrado pela função handleRegister
+            // A interface será atualizada automaticamente após o login
         } catch (error) {
             showCustomError('Puts!', error.message);
         }
@@ -226,6 +223,24 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     checkAuth();
+
+    // Adicione após o DOMContentLoaded
+    document.querySelector('#user-pin').addEventListener('click', function() {
+        navigator.clipboard.writeText(this.textContent).then(() => {
+            const feedback = document.querySelector('#copy-feedback');
+            feedback.style.opacity = '1';
+            setTimeout(() => {
+                feedback.style.opacity = '0';
+            }, 2000);
+        });
+    });
+
+    // Adicione um event listener para o botão OK do popup do PIN
+    document.querySelector('.pin-ok-button').addEventListener('click', function() {
+        const pinPopup = document.querySelector('#pin-success');
+        pinPopup.style.display = 'none';
+        showLoginSuccess(document.querySelector('.user-text').textContent.split(',')[1].trim());
+    });
 });
 
 // Funções Auxiliares
@@ -283,14 +298,22 @@ function showRegisterSuccess() {
 function showPinSuccess(pin) {
     const pinPopup = document.querySelector('#pin-success');
     const pinText = pinPopup.querySelector('#user-pin');
+    const copyFeedback = pinPopup.querySelector('#copy-feedback');
+    
     pinText.textContent = pin;
+    copyFeedback.style.opacity = '0';
     pinPopup.style.display = 'flex';
+
+    // Adiciona efeito hover no PIN
+    pinText.style.cursor = 'pointer';
+    pinText.title = 'Clique para copiar';
 }
 
 function updateUIAfterLogin(username) {
     const userText = document.querySelector('.user-text');
     userText.innerHTML = `Olá, ${username}!`;
     userText.style.flexDirection = 'row';
+    userText.style.gap = '5px';
     
     const regularOptions = document.querySelectorAll('.option:not(.logout-option)');
     const logoutOption = document.querySelector('.logout-option');
@@ -445,14 +468,10 @@ function validateNewPasswordForm() {
 // Função para login
 async function handleLogin(email, password) {
     try {
-        console.log('Iniciando login...'); // Debug
-
         const response = await fetch(`${API_URL}/users/login`, {
             method: 'POST',
-            mode: 'no-cors', // Adiciona esta linha
             headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
                 email: email,
@@ -460,23 +479,22 @@ async function handleLogin(email, password) {
             })
         });
 
-        console.log('Resposta:', response); // Debug
+        const data = await response.json();
 
-        if (!response.ok && response.status !== 0) {
-            const data = await response.json();
+        if (!response.ok) {
             throw new Error(data.message || 'Erro ao fazer login');
         }
 
-        try {
-            const data = await response.json();
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('user', JSON.stringify(data.user));
-            return data.user;
-        } catch {
-            return { nome: email.split('@')[0] }; // Fallback
-        }
+        // Salvar dados do usuário
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+
+        // Mostrar mensagem de sucesso
+        showLoginSuccess(data.user.nome);
+
+        return data.user;
     } catch (error) {
-        console.error('Erro completo:', error); // Debug
+        console.error('Erro:', error);
         throw error;
     }
 }
@@ -484,14 +502,10 @@ async function handleLogin(email, password) {
 // Função para registro
 async function handleRegister(userData) {
     try {
-        console.log('Iniciando registro...', userData); // Debug
-
         const response = await fetch(`${API_URL}/users/register`, {
             method: 'POST',
-            mode: 'no-cors', // Adiciona esta linha
             headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
                 nome: userData.username,
@@ -501,22 +515,23 @@ async function handleRegister(userData) {
             })
         });
 
-        console.log('Resposta:', response); // Debug
+        const data = await response.json();
 
-        if (!response.ok && response.status !== 0) { // Modificado para lidar com no-cors
-            const data = await response.json();
+        if (!response.ok) {
             throw new Error(data.message || 'Erro ao cadastrar');
         }
 
-        // Com no-cors, podemos não receber uma resposta JSON
-        try {
-            const data = await response.json();
-            return data;
-        } catch {
-            return { success: true }; // Fallback
+        // Fazer login automático após cadastro
+        const loginResponse = await handleLogin(userData.email, userData.password);
+
+        // Mostrar o PIN
+        if (data.pin) {
+            showPinSuccess(data.pin);
         }
+
+        return loginResponse;
     } catch (error) {
-        console.error('Erro completo:', error); // Debug
+        console.error('Erro:', error);
         throw error;
     }
 }
