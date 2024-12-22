@@ -470,6 +470,8 @@ function validateNewPasswordForm() {
 // Função para login
 async function handleLogin(email, password) {
     try {
+        console.log('Tentando login com:', { email }); // Debug
+
         const response = await fetch(`${API_URL}/users/login`, {
             method: 'POST',
             headers: {
@@ -482,9 +484,22 @@ async function handleLogin(email, password) {
         });
 
         const data = await response.json();
+        console.log('Resposta do servidor:', data); // Debug
 
         if (!response.ok) {
-            throw new Error(data.message || 'Erro ao fazer login');
+            if (response.status === 500) {
+                throw new Error('Erro no servidor. Por favor, tente novamente mais tarde.');
+            } else if (response.status === 401) {
+                throw new Error('Email ou senha incorretos.');
+            } else if (response.status === 404) {
+                throw new Error('Usuário não encontrado.');
+            } else {
+                throw new Error(data.message || 'Erro ao fazer login');
+            }
+        }
+
+        if (!data.token || !data.user) {
+            throw new Error('Resposta inválida do servidor');
         }
 
         localStorage.setItem('token', data.token);
@@ -493,7 +508,11 @@ async function handleLogin(email, password) {
 
         return data.user;
     } catch (error) {
-        console.error('Erro:', error);
+        console.error('Erro detalhado:', error);
+        // Se for um erro de rede
+        if (error.name === 'TypeError') {
+            throw new Error('Não foi possível conectar ao servidor. Verifique sua conexão.');
+        }
         throw error;
     }
 }
