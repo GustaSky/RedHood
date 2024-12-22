@@ -1,66 +1,61 @@
-document.getElementById('newPasswordForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
+async function handleLogin(email, password) {
     try {
-        const newPassword = document.getElementById('newPassword').value;
-        const confirmPassword = document.getElementById('confirmPassword').value;
-        
-        // Validações
-        if (!newPassword || !confirmPassword) {
-            throw new Error('Por favor, preencha todos os campos.');
-        }
-
-        if (newPassword !== confirmPassword) {
-            throw new Error('As senhas não coincidem.');
-        }
-
-        const strength = checkPasswordStrength(newPassword);
-        if (strength < 2) {
-            throw new Error('A senha precisa ser mais forte.');
-        }
-
-        // Envia a nova senha
-        const response = await fetch(`${API_URL}/users/reset-password`, {
+        const response = await fetch(`${API_URL}/users/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                senha: newPassword
+                email: email,
+                senha: password
             })
         });
 
         const data = await response.json();
 
         if (!response.ok) {
-            throw new Error(data.message || 'Erro ao redefinir senha');
+            throw new Error(data.message || 'Erro ao fazer login');
         }
 
-        hideAllForms();
-        showCustomError('Sucesso!', 'Sua senha foi alterada com sucesso!');
-        
-        // Redireciona para o login
-        setTimeout(() => {
-            formOverlay.style.display = 'block';
-            loginForm.style.display = 'block';
-        }, 2000);
+        // Salva os dados do usuário
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
 
+        // Atualiza a interface
+        hideAllForms();
+        showLoginSuccess(data.user.nome);
+
+        return data.user;
     } catch (error) {
-        console.error('Erro ao redefinir senha:', error);
+        console.error('Erro:', error);
+        throw error;
+    }
+}
+
+// Event listener para o formulário de login
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    try {
+        const email = document.getElementById('loginUsername').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        
+        if (!email || !password) {
+            showCustomError('Ops!', 'Por favor, preencha todos os campos.');
+            return;
+        }
+
+        await handleLogin(email, password);
+    } catch (error) {
         showCustomError('Erro!', error.message);
     }
 });
 
 function hideAllForms() {
-    // Esconde o overlay
     formOverlay.style.display = 'none';
-    
-    // Esconde todos os formulários
     document.querySelectorAll('.login-form, .register-form, .recovery-form, .new-password-form').forEach(form => {
         form.style.display = 'none';
     });
-
-    // Esconde os popups
     document.querySelectorAll('.error-popup, .success-popup, .pin-popup').forEach(popup => {
         popup.style.display = 'none';
     });
@@ -90,12 +85,21 @@ function updatePasswordStrength(strength, meter, text) {
     }
 }
 
-// Função para validar formulário de nova senha
+function validateLoginForm() {
+    const email = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    
+    const submitButton = document.querySelector('#loginForm button[type="submit"]');
+    const isValid = email && password && isValidEmail(email);
+    
+    submitButton.disabled = !isValid;
+    submitButton.classList.toggle('disabled', !isValid);
+}
+
 function validateNewPasswordForm() {
     const newPassword = document.getElementById('newPassword').value;
     const confirmPassword = document.getElementById('confirmPassword').value;
     
-    // Atualiza o indicador de força
     const strength = checkPasswordStrength(newPassword);
     const strengthMeter = document.querySelector('.new-password-form .strength-meter');
     const strengthText = document.querySelector('.new-password-form .strength-text');
@@ -112,10 +116,6 @@ function validateNewPasswordForm() {
     submitButton.disabled = !isValid;
     submitButton.classList.toggle('disabled', !isValid);
 }
-
-// Adiciona os listeners para a força da senha
-document.getElementById('newPassword').addEventListener('input', validateNewPasswordForm);
-document.getElementById('confirmPassword').addEventListener('input', validateNewPasswordForm);
 
 function showCustomError(title, message, duration = 3000) {
     const errorPopup = document.querySelector('#error-custom');
@@ -143,4 +143,52 @@ function checkPasswordStrength(password) {
     
     strength = Object.values(checks).filter(Boolean).length;
     return strength;
+}
+
+function showLoginSuccess(username) {
+    const successPopup = document.querySelector('#login-success');
+    successPopup.style.display = 'flex';
+    
+    setTimeout(() => {
+        successPopup.style.display = 'none';
+        updateUIAfterLogin(username);
+    }, 2000);
+}
+
+function updateUIAfterLogin(username) {
+    const userText = document.querySelector('.user-text');
+    userText.innerHTML = `Olá, ${username}!`;
+    userText.style.flexDirection = 'row';
+    userText.style.gap = '5px';
+    
+    const regularOptions = document.querySelectorAll('.option:not(.logout-option)');
+    const logoutOption = document.querySelector('.logout-option');
+    
+    regularOptions.forEach(option => option.style.display = 'none');
+    logoutOption.style.display = 'flex';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Validação inicial
+    validateLoginForm();
+    validateNewPasswordForm();
+
+    // Event listeners para inputs
+    document.getElementById('loginUsername').addEventListener('input', validateLoginForm);
+    document.getElementById('loginPassword').addEventListener('input', validateLoginForm);
+    document.getElementById('newPassword').addEventListener('input', validateNewPasswordForm);
+    document.getElementById('confirmPassword').addEventListener('input', validateNewPasswordForm);
+
+    // Event listeners para botões de fechar
+    formOverlay.addEventListener('click', hideAllForms);
+    document.querySelectorAll('.close-form').forEach(btn => {
+        btn.addEventListener('click', hideAllForms);
+    });
+
+    // Verifica autenticação ao carregar
+    checkAuth();
+});
+
+function isValidEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
