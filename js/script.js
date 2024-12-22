@@ -151,54 +151,78 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('recoveryForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
-        const email = document.getElementById('recoveryEmail').value.trim();
-        const pin = document.getElementById('recoveryPin').value.trim();
-        
-        if (!email || !pin) {
-            showCustomError('Ops!', 'Por favor, preencha todos os campos.');
-            return;
-        }
+        try {
+            const email = document.getElementById('recoveryEmail').value.trim();
+            const pin = document.getElementById('recoveryPin').value.trim();
+            
+            if (!email || !pin) {
+                showCustomError('Ops!', 'Por favor, preencha todos os campos.');
+                return;
+            }
 
-        if (!isValidEmail(email)) {
-            showCustomError('Ops!', 'Por favor, insira um e-mail válido.');
-            return;
-        }
+            const response = await fetch(`${API_URL}/users/verify-pin`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, pin })
+            });
 
-        if (pin.length !== 6) {
-            showCustomError('Ops!', 'O PIN deve ter 6 dígitos.');
-            return;
-        }
+            const data = await response.json();
 
-        // Aqui irá a verificação do PIN quando o banco estiver conectado
-        hideAllForms();
-        document.querySelector('.new-password-form').style.display = 'block';
+            if (!response.ok) {
+                throw new Error(data.message || 'PIN ou email inválidos');
+            }
+
+            // Se a verificação for bem-sucedida
+            hideAllForms();
+            document.querySelector('.new-password-form').style.display = 'block';
+        } catch (error) {
+            showCustomError('Eita!', error.message);
+        }
     });
 
     // Event listener para o formulário de nova senha
     document.getElementById('newPasswordForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
-        const newPassword = document.getElementById('newPassword').value;
-        const confirmPassword = document.getElementById('confirmPassword').value;
-        
-        if (!newPassword || !confirmPassword) {
-            showCustomError('Ops!', 'Por favor, preencha todos os campos.');
-            return;
-        }
+        try {
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const email = document.getElementById('recoveryEmail').value; // Email do formulário anterior
+            
+            if (!newPassword || !confirmPassword) {
+                showCustomError('Ops!', 'Por favor, preencha todos os campos.');
+                return;
+            }
 
-        if (newPassword !== confirmPassword) {
-            showCustomError('Ops!', 'As senhas não coincidem.');
-            return;
-        }
+            if (newPassword !== confirmPassword) {
+                showCustomError('Ops!', 'As senhas não coincidem.');
+                return;
+            }
 
-        if (checkPasswordStrength(newPassword) < 3) {
-            showCustomError('Ops!', 'A senha precisa ser mais forte.');
-            return;
-        }
+            const response = await fetch(`${API_URL}/users/reset-password`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email,
+                    newPassword
+                })
+            });
 
-        // Aqui irá a atualização da senha quando o banco estiver conectado
-        hideAllForms();
-        showCustomError('Sucesso!', 'Sua senha foi alterada com sucesso!');
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Erro ao redefinir senha');
+            }
+
+            hideAllForms();
+            showCustomError('Sucesso!', 'Sua senha foi alterada com sucesso!');
+        } catch (error) {
+            showCustomError('Eita!', error.message);
+        }
     });
 
     checkAuth();
@@ -337,7 +361,6 @@ function validateRegisterForm() {
     const email = document.getElementById('registerEmail').value.trim();
     const senha = document.getElementById('registerPassword').value;
     const dataNascimento = document.getElementById('registerBirthdate').value;
-    const recaptchaResponse = grecaptcha.getResponse();
     
     // Validação de idade
     const idade = calculateAge(dataNascimento);
@@ -356,8 +379,7 @@ function validateRegisterForm() {
         senha && 
         checkPasswordStrength(senha) >= 3 &&
         dataNascimento && 
-        idade >= 18 &&
-        recaptchaResponse;
+        idade >= 18;
     
     submitButton.disabled = !isValid;
     submitButton.classList.toggle('disabled', !isValid);
