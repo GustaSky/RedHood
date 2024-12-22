@@ -156,6 +156,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
+            // Primeiro, verifica se o email e PIN são válidos
             const response = await fetch(`${API_URL}/users/verify-pin`, {
                 method: 'POST',
                 headers: {
@@ -165,15 +166,25 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             const data = await response.json();
+            console.log('Resposta da verificação:', data); // Debug
 
             if (!response.ok) {
-                throw new Error(data.message || 'PIN ou email inválidos');
+                if (response.status === 404) {
+                    throw new Error('Email ou PIN incorretos.');
+                }
+                throw new Error(data.message || 'Erro ao verificar PIN');
             }
 
-            // Se a verificação for bem-sucedida
+            // Se a verificação for bem-sucedida, mostra o formulário de nova senha
             hideAllForms();
-            document.querySelector('.new-password-form').style.display = 'block';
+            const newPasswordForm = document.querySelector('.new-password-form');
+            newPasswordForm.style.display = 'block';
+            
+            // Armazena o email verificado para usar no reset de senha
+            localStorage.setItem('reset_email', email);
+
         } catch (error) {
+            console.error('Erro na verificação:', error);
             showCustomError('Eita!', error.message);
         }
     });
@@ -185,8 +196,12 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const newPassword = document.getElementById('newPassword').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
-            const email = document.getElementById('recoveryEmail').value; // Email do formulário anterior
+            const email = localStorage.getItem('reset_email'); // Pega o email verificado
             
+            if (!email) {
+                throw new Error('Por favor, verifique seu email e PIN primeiro.');
+            }
+
             if (!newPassword || !confirmPassword) {
                 showCustomError('Ops!', 'Por favor, preencha todos os campos.');
                 return;
@@ -214,9 +229,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error(data.message || 'Erro ao redefinir senha');
             }
 
+            // Limpa o email armazenado
+            localStorage.removeItem('reset_email');
+
             hideAllForms();
             showCustomError('Sucesso!', 'Sua senha foi alterada com sucesso!');
+            
+            // Mostra o formulário de login após alguns segundos
+            setTimeout(() => {
+                formOverlay.style.display = 'block';
+                loginForm.style.display = 'block';
+            }, 2000);
+
         } catch (error) {
+            console.error('Erro ao redefinir senha:', error);
             showCustomError('Eita!', error.message);
         }
     });
