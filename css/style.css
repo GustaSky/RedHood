@@ -431,7 +431,7 @@ body, input, button, label, a {
 /* Estilo do popup do PIN */
 .pin-popup .success-content {
     background-color: #dee7e7;
-    padding: 40px;
+    padding: 45px;
     border-radius: 10px;
     text-align: center;
     max-width: 400px;
@@ -441,9 +441,9 @@ body, input, button, label, a {
 }
 
 .pin-popup .success-icon {
-    width: 100px;
-    height: 100px;
-    margin-bottom: 25px;
+    width: 120px;
+    height: 120px;
+    margin-bottom: 30px;
 }
 
 .pin-popup h3 {
