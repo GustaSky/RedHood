@@ -62,11 +62,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 birthdate: document.getElementById('registerBirthdate').value
             };
 
+            hideAllForms(); // Esconde os formulários antes da requisição
             const user = await handleRegister(userData);
-            hideAllForms();
             
-            // O PIN será mostrado pela função handleRegister
-            // A interface será atualizada automaticamente após o login
+            // O PIN e o login serão tratados dentro da função handleRegister
         } catch (error) {
             showCustomError('Puts!', error.message);
         }
@@ -480,8 +479,12 @@ async function handleLogin(email, password) {
         });
 
         const data = await response.json();
+        console.log('Resposta do login:', data); // Debug
 
         if (!response.ok) {
+            if (response.status === 500) {
+                throw new Error('Erro interno do servidor. Tente novamente mais tarde.');
+            }
             throw new Error(data.message || 'Erro ao fazer login');
         }
 
@@ -494,7 +497,7 @@ async function handleLogin(email, password) {
 
         return data.user;
     } catch (error) {
-        console.error('Erro:', error);
+        console.error('Erro detalhado:', error);
         throw error;
     }
 }
@@ -516,22 +519,27 @@ async function handleRegister(userData) {
         });
 
         const data = await response.json();
+        console.log('Resposta do registro:', data); // Debug
 
         if (!response.ok) {
+            if (response.status === 400 && data.message.includes('já cadastrado')) {
+                throw new Error('Este email já está cadastrado');
+            }
             throw new Error(data.message || 'Erro ao cadastrar');
+        }
+
+        // Mostrar o PIN antes do login
+        if (data.pin) {
+            showPinSuccess(data.pin);
+            // Aguardar um pouco antes de fazer o login
+            await new Promise(resolve => setTimeout(resolve, 2000));
         }
 
         // Fazer login automático após cadastro
         const loginResponse = await handleLogin(userData.email, userData.password);
-
-        // Mostrar o PIN
-        if (data.pin) {
-            showPinSuccess(data.pin);
-        }
-
         return loginResponse;
     } catch (error) {
-        console.error('Erro:', error);
+        console.error('Erro detalhado:', error);
         throw error;
     }
 }
