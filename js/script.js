@@ -68,6 +68,7 @@ function hideAllForms() {
 
 // Função para lidar com o clique nas opções do menu
 function handleOptionClick(e) {
+    console.log('Opção clicada:', this.querySelector('span').textContent);
     e.stopPropagation();
     const optionText = this.querySelector('span').textContent;
     
@@ -114,3 +115,104 @@ function handleForgotPassword(e) {
     document.querySelector('.recovery-form').style.display = 'block';
     formOverlay.style.display = 'block';
 }
+
+// Adicione estas funções que podem estar faltando
+function showCustomError(title, message) {
+    const errorPopup = document.querySelector('#error-custom');
+    const errorTitle = errorPopup.querySelector('h3');
+    const errorMessage = errorPopup.querySelector('p');
+    
+    errorTitle.textContent = title;
+    errorMessage.textContent = message;
+    errorPopup.style.display = 'flex';
+    
+    setTimeout(() => {
+        errorPopup.style.display = 'none';
+    }, 3000);
+}
+
+function showLoginSuccess(username) {
+    const successPopup = document.querySelector('#login-success');
+    successPopup.style.display = 'flex';
+    
+    setTimeout(() => {
+        successPopup.style.display = 'none';
+        updateUIAfterLogin(username);
+    }, 2000);
+}
+
+function updateUIAfterLogin(username) {
+    const userText = document.querySelector('.user-text');
+    userText.innerHTML = `Olá, ${username}!`;
+    userText.style.flexDirection = 'row';
+    userText.style.gap = '5px';
+    
+    const regularOptions = document.querySelectorAll('.option:not(.logout-option)');
+    const logoutOption = document.querySelector('.logout-option');
+    
+    regularOptions.forEach(option => option.style.display = 'none');
+    logoutOption.style.display = 'flex';
+}
+
+function handleLogout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    
+    const userText = document.querySelector('.user-text');
+    userText.innerHTML = 'Faça seu login<br>ou se cadastre aqui!';
+    userText.style.flexDirection = 'column';
+    
+    const regularOptions = document.querySelectorAll('.option:not(.logout-option)');
+    const logoutOption = document.querySelector('.logout-option');
+    
+    regularOptions.forEach(option => option.style.display = 'flex');
+    logoutOption.style.display = 'none';
+    
+    hideMenu();
+}
+
+// Função para login
+async function handleLogin(email, password) {
+    console.log('Tentando login com:', email);
+    try {
+        const response = await fetch(`${API_URL}/users/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                email: email,
+                senha: password
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || 'Erro ao fazer login');
+        }
+
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+
+        return data.user;
+    } catch (error) {
+        console.error('Erro:', error);
+        throw error;
+    }
+}
+
+function checkAuth() {
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user'));
+    
+    if (token && user) {
+        updateUIAfterLogin(user.nome);
+    }
+}
+
+// Teste a conexão com o backend
+fetch(`${API_URL}/users/health`)
+    .then(response => response.json())
+    .then(data => console.log('Backend status:', data))
+    .catch(error => console.error('Erro ao conectar com backend:', error));
