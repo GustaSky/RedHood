@@ -1,69 +1,23 @@
-document.getElementById('newPasswordForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    try {
-        const newPassword = document.getElementById('newPassword').value;
-        const confirmPassword = document.getElementById('confirmPassword').value;
-        const email = localStorage.getItem('reset_email');
-        const pin = localStorage.getItem('reset_pin');
+// Constantes para API
+const API_URL = 'https://redhood-api-production.up.railway.app/api';
 
-        // Validação apenas da nova senha
-        if (!newPassword || !confirmPassword) {
-            throw new Error('Por favor, preencha a nova senha.');
-        }
-
-        if (newPassword !== confirmPassword) {
-            throw new Error('As senhas não coincidem.');
-        }
-
-        // Verifica força da senha
-        const strength = checkPasswordStrength(newPassword);
-        if (strength < 2) {
-            throw new Error('A senha precisa ser mais forte.');
-        }
-
-        // Atualiza a senha no backend
-        const response = await fetch(`${API_URL}/users/reset-password`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                senha: newPassword // Enviando apenas a nova senha
-            })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.message || 'Erro ao redefinir senha');
-        }
-
-        hideAllForms();
-        showCustomError('Sucesso!', 'Sua senha foi alterada com sucesso!');
-        
-        setTimeout(() => {
-            formOverlay.style.display = 'block';
-            loginForm.style.display = 'block';
-        }, 2000);
-
-    } catch (error) {
-        console.error('Erro ao redefinir senha:', error);
-        showCustomError('Erro!', error.message);
-    }
-});
+// Elementos DOM
+const userContainer = document.querySelector('.user-container');
+const loginOptions = document.querySelector('.login-options');
+const loginForm = document.querySelector('.login-form');
+const registerForm = document.querySelector('.register-form');
+const formOverlay = document.querySelector('.form-overlay');
+const overlay = document.querySelector('.overlay');
 
 // Event Listeners
 document.addEventListener('DOMContentLoaded', function() {
-    // Menu de Login/Registro
-    const userContainer = document.querySelector('.user-container');
-    const loginOptions = document.querySelector('.login-options');
-    const overlay = document.querySelector('.overlay');
-    const formOverlay = document.querySelector('.form-overlay');
-    const loginForm = document.querySelector('.login-form');
-    const registerForm = document.querySelector('.register-form');
+    // Inicialização
+    initializeEventListeners();
+    checkAuth();
+});
 
-    // Evento de clique no ícone de usuário
+function initializeEventListeners() {
+    // Menu de Login/Registro
     userContainer.addEventListener('click', function(e) {
         e.stopPropagation();
         loginOptions.classList.toggle('active');
@@ -78,74 +32,24 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Click nas opções de login/registro
+    // Click nas opções
     document.querySelectorAll('.login-options .option').forEach(option => {
-        option.addEventListener('click', function(e) {
-            e.stopPropagation();
-            const optionText = this.querySelector('span').textContent;
-            
-            hideMenu();
-
-            if (optionText === 'Fazer Login') {
-                formOverlay.style.display = 'block';
-                loginForm.style.display = 'block';
-            } 
-            else if (optionText === 'Cadastrar-se') {
-                formOverlay.style.display = 'block';
-                registerForm.style.display = 'block';
-            }
-            else if (optionText === 'Sair') {
-                handleLogout();
-            }
-        });
+        option.addEventListener('click', handleOptionClick);
     });
 
-    // Formulário de Login
-    document.getElementById('loginForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        try {
-            const email = document.getElementById('loginUsername').value.trim();
-            const password = document.getElementById('loginPassword').value;
-            
-            if (!email || !password) {
-                showCustomError('Ops!', 'Por favor, preencha todos os campos.');
-                return;
-            }
+    // Formulários
+    document.getElementById('loginForm').addEventListener('submit', handleLoginSubmit);
+    document.getElementById('registerForm').addEventListener('submit', handleRegisterSubmit);
+    document.getElementById('recoveryForm').addEventListener('submit', handleRecoverySubmit);
+    document.getElementById('newPasswordForm').addEventListener('submit', handleNewPasswordSubmit);
 
-            const user = await handleLogin(email, password);
-            hideAllForms();
-            showLoginSuccess(user.nome);
-        } catch (error) {
-            showCustomError('Eita!', error.message);
-        }
-    });
-
-    // Validação dos formulários
-    const loginInputs = document.querySelectorAll('#loginForm input');
-    loginInputs.forEach(input => {
-        input.addEventListener('input', validateLoginForm);
-    });
-
-    // Botões de fechar
+    // Outros eventos
+    document.getElementById('forgotPasswordLink').addEventListener('click', handleForgotPassword);
+    document.querySelector('.logout-option').addEventListener('click', handleLogout);
     document.querySelectorAll('.close-form').forEach(btn => {
         btn.addEventListener('click', hideAllForms);
     });
-
-    // Recuperação de senha
-    document.getElementById('forgotPasswordLink').addEventListener('click', function(e) {
-        e.preventDefault();
-        hideAllForms();
-        document.querySelector('.recovery-form').style.display = 'block';
-        formOverlay.style.display = 'block';
-    });
-
-    // Logout
-    document.querySelector('.logout-option').addEventListener('click', handleLogout);
-
-    // Verificar autenticação ao carregar
-    checkAuth();
-});
+}
 
 // Função para esconder o menu
 function hideMenu() {
@@ -160,4 +64,53 @@ function hideAllForms() {
     registerForm.style.display = 'none';
     document.querySelector('.recovery-form').style.display = 'none';
     document.querySelector('.new-password-form').style.display = 'none';
+}
+
+// Função para lidar com o clique nas opções do menu
+function handleOptionClick(e) {
+    e.stopPropagation();
+    const optionText = this.querySelector('span').textContent;
+    
+    hideMenu();
+
+    if (optionText === 'Fazer Login') {
+        formOverlay.style.display = 'block';
+        loginForm.style.display = 'block';
+    } 
+    else if (optionText === 'Cadastrar-se') {
+        formOverlay.style.display = 'block';
+        registerForm.style.display = 'block';
+    }
+    else if (optionText === 'Sair') {
+        handleLogout();
+    }
+}
+
+// Função para lidar com o submit do login
+async function handleLoginSubmit(e) {
+    e.preventDefault();
+    
+    try {
+        const email = document.getElementById('loginUsername').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        
+        if (!email || !password) {
+            showCustomError('Ops!', 'Por favor, preencha todos os campos.');
+            return;
+        }
+
+        const user = await handleLogin(email, password);
+        hideAllForms();
+        showLoginSuccess(user.nome);
+    } catch (error) {
+        showCustomError('Eita!', error.message);
+    }
+}
+
+// Função para lidar com o clique em "Esqueceu a senha?"
+function handleForgotPassword(e) {
+    e.preventDefault();
+    hideAllForms();
+    document.querySelector('.recovery-form').style.display = 'block';
+    formOverlay.style.display = 'block';
 }
