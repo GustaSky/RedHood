@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
-    <script src="https://www.google.com/recaptcha/api.js?render=6Lf-dqIqAAAAANWYuVsvOhN9kxu7f0QlFAOyvBmT"></script>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
     <div class="retangulo-topo">
@@ -40,12 +40,15 @@
         </div>
         <form id="loginForm">
             <div class="form-group">
-                <label for="loginUsername">Nome de usuário</label>
-                <input type="text" id="loginUsername">
+                <label for="loginUsername">E-mail</label>
+                <input type="email" id="loginUsername">
             </div>
             <div class="form-group">
                 <label for="loginPassword">Senha</label>
                 <input type="password" id="loginPassword">
+            </div>
+            <div class="forgot-password">
+                <a href="#" id="forgotPasswordLink">Esqueceu a sua senha?</a>
             </div>
             <button type="submit">Entrar</button>
         </form>
@@ -58,7 +61,7 @@
         </div>
         <form id="registerForm">
             <div class="form-group">
-                <label for="registerUsername">Nome de usuário</label>
+                <label for="registerUsername">Nome</label>
                 <input type="text" id="registerUsername">
             </div>
             <div class="form-group">
@@ -74,21 +77,25 @@
                 </div>
             </div>
             <div class="form-group">
-                <label for="registerBirthdate">Data de nascimento</label>
-                <input type="date" id="registerBirthdate">
+                <label for="registerBirthdate">Data de Nascimento</label>
+                <input type="date" id="registerBirthdate" required>
+                <span class="age-error">Você precisa ter 18 anos ou mais para se cadastrar.</span>
+            </div>
+            <div class="form-group">
+                <div class="g-recaptcha" data-sitekey="6Lc_saIqAAAAAA2NSfRApHXpzTahtV9S_qN9D3gq"></div>
             </div>
             <button type="submit">Cadastrar</button>
         </form>
     </div>
-    <script src="js/script.js"></script>
+
     <div class="error-popup" id="error-custom">
         <div class="error-content">
             <img src="imgs/erro.png" alt="Error" class="error-icon">
-            <h3>Erro</h3>
-            <p id="error-message">Você precisa ter 18 anos ou mais para se cadastrar.</p>
-            <button class="error-close">OK</button>
+            <h3>Erro!</h3>
+            <p>Mensagem de erro aqui</p>
         </div>
     </div>
+
     <div class="success-popup" id="login-success">
         <div class="success-content">
             <img src="imgs/loginEcadastro.png" alt="Success" class="success-icon">
@@ -96,5 +103,60 @@
             <p>Bem-vindo de volta!</p>
         </div>
     </div>
+
+    <div class="pin-popup" id="pin-success">
+        <div class="success-content">
+            <img src="imgs/loginEcadastro.png" alt="Success" class="success-icon">
+            <h3>Cadastro Realizado!</h3>
+            <p>Seu PIN de recuperação é: 
+                <strong id="user-pin">123456</strong>
+                <span id="copy-feedback">Copiado!</span>
+            </p>
+            <p>Clique no PIN para copiá-lo. Guarde este número!</p>
+            <button class="pin-ok-button">OK</button>
+        </div>
+    </div>
+
+    <div class="recovery-form">
+        <div class="form-header">
+            <h2>Redefinir Senha</h2>
+            <i class="fa-solid fa-times close-form"></i>
+        </div>
+        <form id="recoveryForm">
+            <div class="form-group">
+                <label for="recoveryEmail">E-mail</label>
+                <input type="email" id="recoveryEmail" required>
+            </div>
+            <div class="form-group">
+                <label for="recoveryPin">PIN de Recuperação</label>
+                <input type="text" id="recoveryPin" maxlength="6" required>
+            </div>
+            <button type="submit" disabled class="disabled">Redefinir Senha</button>
+        </form>
+    </div>
+
+    <div class="new-password-form">
+        <div class="form-header">
+            <h2>Redefinir Senha</h2>
+            <i class="fa-solid fa-times close-form"></i>
+        </div>
+        <form id="newPasswordForm">
+            <div class="form-group">
+                <label for="newPassword">Nova Senha</label>
+                <input type="password" id="newPassword">
+                <div class="password-strength">
+                    <div class="strength-meter"></div>
+                    <div class="strength-text"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="confirmPassword">Confirmar Senha</label>
+                <input type="password" id="confirmPassword">
+            </div>
+            <button type="submit">Alterar Senha</button>
+        </form>
+    </div>
+
+    <script src="js/script.js"></script>
 </body>
 </html>
