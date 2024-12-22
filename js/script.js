@@ -26,7 +26,7 @@ const registerUsername = document.getElementById('registerUsername');
 const registerEmail = document.getElementById('registerEmail');
 const registerSubmitButton = document.querySelector('#registerForm button[type="submit"]');
 
-// Adicione no início do arquivo com as outras constantes
+// Adicione no início com as outras constantes
 let isLoggedIn = false;
 let currentUser = null;
 
@@ -62,23 +62,23 @@ function updateUIAfterLogin(username) {
 
 // Função para fazer logout
 function handleLogout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     isLoggedIn = false;
     currentUser = null;
     
-    // Restaura o texto original
+    // Restaura a interface
     const userText = document.querySelector('.user-text');
     userText.innerHTML = 'Faça seu login<br>ou se cadastre aqui!';
     userText.style.flexDirection = 'column';
     userText.style.gap = '0';
     
-    // Restaura as opções do menu
     const regularOptions = document.querySelectorAll('.option:not(.logout-option)');
     const logoutOption = document.querySelector('.logout-option');
     
     regularOptions.forEach(option => option.style.display = 'flex');
     logoutOption.style.display = 'none';
     
-    // Esconde o menu
     hideMenu();
 }
 
@@ -362,41 +362,133 @@ function showRegisterSuccess() {
     }, 2000);
 }
 
-// No evento de login
-document.getElementById('loginForm').addEventListener('submit', function(e) {
+// Constantes para API
+const API_URL = 'https://backendredhood.onrender.com/api';
+
+// Função para login
+async function handleLogin(username, password) {
+    try {
+        const response = await fetch(`${API_URL}/users/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                email: username,
+                senha: password
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || 'Erro ao fazer login');
+        }
+
+        // Salva o token e dados do usuário
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+
+        return data.user;
+    } catch (error) {
+        throw error;
+    }
+}
+
+// Função para registro
+async function handleRegister(userData) {
+    try {
+        const response = await fetch(`${API_URL}/users/register`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                nome: userData.username,
+                email: userData.email,
+                senha: userData.password,
+                data_nascimento: userData.birthdate
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || 'Erro ao cadastrar');
+        }
+
+        return data;
+    } catch (error) {
+        throw error;
+    }
+}
+
+// Atualizar o event listener do formulário de login
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
-    // Execute o reCAPTCHA v3
-    grecaptcha.execute('6Lf-dqIqAAAAANWYuVsvOhN9kxu7f0QlFAOyvBmT', {action: 'login'})
-    .then(function(token) {
+    try {
         const username = document.getElementById('loginUsername').value.trim();
         const password = document.getElementById('loginPassword').value;
         
         if (!username || !password) {
-            showError('Por favor, preencha todos os campos.');
-            return false;
+            showCustomError('Ops!', 'Por favor, preencha todos os campos.');
+            return;
         }
+
+        const user = await handleLogin(username, password);
         
         formOverlay.style.display = 'none';
         loginForm.style.display = 'none';
-        showLoginSuccess(username);
-    });
+        showLoginSuccess(user.nome);
+    } catch (error) {
+        showCustomError('Eita!', error.message);
+    }
 });
 
-// No evento de registro
-document.getElementById('registerForm').addEventListener('submit', function(e) {
+// Atualizar o event listener do formulário de registro
+document.getElementById('registerForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
-    // Execute o reCAPTCHA v3
-    grecaptcha.execute('6Lf-dqIqAAAAANWYuVsvOhN9kxu7f0QlFAOyvBmT', {action: 'register'})
-    .then(function(token) {
-        // ... suas validações existentes ...
+    try {
+        const userData = {
+            username: document.getElementById('registerUsername').value.trim(),
+            email: document.getElementById('registerEmail').value.trim(),
+            password: document.getElementById('registerPassword').value,
+            birthdate: document.getElementById('registerBirthdate').value
+        };
+
+        const result = await handleRegister(userData);
         
         formOverlay.style.display = 'none';
         registerForm.style.display = 'none';
-        showRegisterSuccess();
-    });
+
+        // Mostra o PIN gerado
+        if (result.pin) {
+            const pinPopup = document.querySelector('#pin-success');
+            const pinText = pinPopup.querySelector('#user-pin');
+            pinText.textContent = result.pin;
+            pinPopup.style.display = 'flex';
+        } else {
+            showRegisterSuccess();
+        }
+    } catch (error) {
+        showCustomError('Puts!', error.message);
+    }
 });
+
+// Função para verificar se está autenticado
+function checkAuth() {
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user'));
+    
+    if (token && user) {
+        updateUIAfterLogin(user.nome);
+    }
+}
+
+// Verificar autenticação ao carregar a página
+document.addEventListener('DOMContentLoaded', checkAuth);
 
 // Fechar erro ao clicar no botão OK
 errorCloseBtn.addEventListener('click', hideError);
