@@ -52,3 +52,82 @@ document.getElementById('newPasswordForm').addEventListener('submit', async func
         showCustomError('Erro!', error.message);
     }
 });
+
+// Event Listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Menu de Login/Registro
+    userContainer.addEventListener('click', function(e) {
+        e.stopPropagation();
+        loginOptions.classList.toggle('active');
+        overlay.classList.toggle('active');
+    });
+
+    // Click nas opções de login/registro
+    document.querySelectorAll('.login-options .option').forEach(option => {
+        option.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const optionText = this.querySelector('span').textContent;
+            
+            hideMenu();
+
+            if (optionText === 'Fazer Login') {
+                formOverlay.style.display = 'block';
+                loginForm.style.display = 'block';
+            } 
+            else if (optionText === 'Cadastrar-se') {
+                formOverlay.style.display = 'block';
+                registerForm.style.display = 'block';
+            }
+            else if (optionText === 'Sair') {
+                handleLogout();
+            }
+        });
+    });
+
+    // Formulário de Login
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        try {
+            const email = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!email || !password) {
+                showCustomError('Ops!', 'Por favor, preencha todos os campos.');
+                return;
+            }
+
+            const user = await handleLogin(email, password);
+            hideAllForms();
+            showLoginSuccess(user.nome);
+        } catch (error) {
+            showCustomError('Eita!', error.message);
+        }
+    });
+
+    // Validação do formulário de login
+    const loginInputs = document.querySelectorAll('#loginForm input');
+    loginInputs.forEach(input => {
+        input.addEventListener('input', validateLoginForm);
+    });
+
+    // Botão de fechar formulário
+    document.querySelectorAll('.close-form').forEach(btn => {
+        btn.addEventListener('click', hideAllForms);
+    });
+});
+
+// Função para esconder o menu
+function hideMenu() {
+    loginOptions.classList.remove('active');
+    overlay.classList.remove('active');
+}
+
+// Função para esconder todos os formulários
+function hideAllForms() {
+    formOverlay.style.display = 'none';
+    loginForm.style.display = 'none';
+    registerForm.style.display = 'none';
+    document.querySelector('.recovery-form').style.display = 'none';
+    document.querySelector('.new-password-form').style.display = 'none';
+}
