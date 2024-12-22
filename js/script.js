@@ -196,7 +196,7 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const newPassword = document.getElementById('newPassword').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
-            const email = localStorage.getItem('reset_email'); // Pega o email verificado
+            const email = localStorage.getItem('reset_email');
             
             if (!email) {
                 throw new Error('Por favor, verifique seu email e PIN primeiro.');
@@ -219,7 +219,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 body: JSON.stringify({
                     email,
-                    newPassword
+                    senha: newPassword
                 })
             });
 
@@ -482,12 +482,18 @@ function validateNewPasswordForm() {
     const newPassword = document.getElementById('newPassword').value;
     const confirmPassword = document.getElementById('confirmPassword').value;
     
+    // Atualiza o indicador de força
+    const strength = checkPasswordStrength(newPassword);
+    const strengthMeter = document.querySelector('.new-password-form .strength-meter');
+    const strengthText = document.querySelector('.new-password-form .strength-text');
+    updatePasswordStrength(strength, strengthMeter, strengthText);
+    
     const submitButton = document.querySelector('#newPasswordForm button[type="submit"]');
     const isValid = 
         newPassword && 
         confirmPassword && 
         newPassword === confirmPassword && 
-        checkPasswordStrength(newPassword) >= 3;
+        strength >= 2; // Usando o mesmo critério do registro
     
     submitButton.disabled = !isValid;
     submitButton.classList.toggle('disabled', !isValid);

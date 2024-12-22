@@ -534,3 +534,15 @@ body, input, button, label, a {
         transform: translateY(0);
     }
 }
+
+.register-form {
+    padding: 25px;
+}
+
+.form-group {
+    margin-bottom: 12px;
+}
+
+.form-header {
+    margin-bottom: 15px;
+}
