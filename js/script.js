@@ -56,10 +56,26 @@ document.getElementById('newPasswordForm').addEventListener('submit', async func
 // Event Listeners
 document.addEventListener('DOMContentLoaded', function() {
     // Menu de Login/Registro
+    const userContainer = document.querySelector('.user-container');
+    const loginOptions = document.querySelector('.login-options');
+    const overlay = document.querySelector('.overlay');
+    const formOverlay = document.querySelector('.form-overlay');
+    const loginForm = document.querySelector('.login-form');
+    const registerForm = document.querySelector('.register-form');
+
+    // Evento de clique no ícone de usuário
     userContainer.addEventListener('click', function(e) {
         e.stopPropagation();
         loginOptions.classList.toggle('active');
         overlay.classList.toggle('active');
+    });
+
+    // Fechar menu ao clicar fora
+    document.addEventListener('click', function(e) {
+        if (!userContainer.contains(e.target)) {
+            loginOptions.classList.remove('active');
+            overlay.classList.remove('active');
+        }
     });
 
     // Click nas opções de login/registro
@@ -105,16 +121,30 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Validação do formulário de login
+    // Validação dos formulários
     const loginInputs = document.querySelectorAll('#loginForm input');
     loginInputs.forEach(input => {
         input.addEventListener('input', validateLoginForm);
     });
 
-    // Botão de fechar formulário
+    // Botões de fechar
     document.querySelectorAll('.close-form').forEach(btn => {
         btn.addEventListener('click', hideAllForms);
     });
+
+    // Recuperação de senha
+    document.getElementById('forgotPasswordLink').addEventListener('click', function(e) {
+        e.preventDefault();
+        hideAllForms();
+        document.querySelector('.recovery-form').style.display = 'block';
+        formOverlay.style.display = 'block';
+    });
+
+    // Logout
+    document.querySelector('.logout-option').addEventListener('click', handleLogout);
+
+    // Verificar autenticação ao carregar
+    checkAuth();
 });
 
 // Função para esconder o menu
