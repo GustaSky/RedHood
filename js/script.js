@@ -238,7 +238,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelector('.pin-ok-button').addEventListener('click', function() {
         const pinPopup = document.querySelector('#pin-success');
         pinPopup.style.display = 'none';
-        showLoginSuccess(document.querySelector('.user-text').textContent.split(',')[1].trim());
+        
+        // Mostrar formulário de login
+        formOverlay.style.display = 'block';
+        loginForm.style.display = 'block';
     });
 });
 
@@ -479,25 +482,18 @@ async function handleLogin(email, password) {
         });
 
         const data = await response.json();
-        console.log('Resposta do login:', data); // Debug
 
         if (!response.ok) {
-            if (response.status === 500) {
-                throw new Error('Erro interno do servidor. Tente novamente mais tarde.');
-            }
             throw new Error(data.message || 'Erro ao fazer login');
         }
 
-        // Salvar dados do usuário
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
-
-        // Mostrar mensagem de sucesso
         showLoginSuccess(data.user.nome);
 
         return data.user;
     } catch (error) {
-        console.error('Erro detalhado:', error);
+        console.error('Erro:', error);
         throw error;
     }
 }
@@ -505,41 +501,35 @@ async function handleLogin(email, password) {
 // Função para registro
 async function handleRegister(userData) {
     try {
-        const response = await fetch(`${API_URL}/users/register`, {
+        const formattedData = {
+            nome: userData.username,
+            email: userData.email,
+            senha: userData.password,
+            data_nascimento: userData.birthdate
+        };
+
+        const response = await fetch('https://redhood-api-production.up.railway.app/api/users/register', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                nome: userData.username,
-                email: userData.email,
-                senha: userData.password,
-                data_nascimento: userData.birthdate
-            })
+            body: JSON.stringify(formattedData)
         });
 
         const data = await response.json();
-        console.log('Resposta do registro:', data); // Debug
 
         if (!response.ok) {
-            if (response.status === 400 && data.message.includes('já cadastrado')) {
-                throw new Error('Este email já está cadastrado');
-            }
             throw new Error(data.message || 'Erro ao cadastrar');
         }
 
-        // Mostrar o PIN antes do login
+        // Mostrar o PIN se existir
         if (data.pin) {
             showPinSuccess(data.pin);
-            // Aguardar um pouco antes de fazer o login
-            await new Promise(resolve => setTimeout(resolve, 2000));
         }
 
-        // Fazer login automático após cadastro
-        const loginResponse = await handleLogin(userData.email, userData.password);
-        return loginResponse;
+        return data;
     } catch (error) {
-        console.error('Erro detalhado:', error);
+        console.error('Erro:', error);
         throw error;
     }
 }
