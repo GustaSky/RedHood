@@ -143,7 +143,7 @@ document.addEventListener('DOMContentLoaded', function() {
     validateRecoveryForm();
     validateNewPasswordForm();
 
-    // Event listener para o formulário de recuperação
+    // Event listener para o formulário de recuperação (verificação de email e PIN)
     document.getElementById('recoveryForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
@@ -152,11 +152,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const pin = document.getElementById('recoveryPin').value.trim();
             
             if (!email || !pin) {
-                showCustomError('Ops!', 'Por favor, preencha todos os campos.');
-                return;
+                throw new Error('Por favor, preencha todos os campos.');
             }
 
-            // Primeiro, verifica se o email e PIN são válidos
+            // Verifica o email e PIN no backend
             const response = await fetch(`${API_URL}/users/verify-pin`, {
                 method: 'POST',
                 headers: {
@@ -166,26 +165,19 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             const data = await response.json();
-            console.log('Resposta da verificação:', data); // Debug
 
             if (!response.ok) {
-                if (response.status === 404) {
-                    throw new Error('Email ou PIN incorretos.');
-                }
-                throw new Error(data.message || 'Erro ao verificar PIN');
+                throw new Error(data.message || 'Email ou PIN inválidos');
             }
 
-            // Se a verificação for bem-sucedida, mostra o formulário de nova senha
-            hideAllForms();
-            const newPasswordForm = document.querySelector('.new-password-form');
-            newPasswordForm.style.display = 'block';
-            
-            // Armazena o email verificado para usar no reset de senha
+            // Se a verificação for bem-sucedida, armazena o email e mostra o formulário de nova senha
             localStorage.setItem('reset_email', email);
+            hideAllForms();
+            document.querySelector('.new-password-form').style.display = 'block';
 
         } catch (error) {
             console.error('Erro na verificação:', error);
-            showCustomError('Eita!', error.message);
+            showCustomError('Erro!', error.message);
         }
     });
 
@@ -203,22 +195,27 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             if (!newPassword || !confirmPassword) {
-                showCustomError('Ops!', 'Por favor, preencha todos os campos.');
-                return;
+                throw new Error('Por favor, preencha todos os campos.');
             }
 
             if (newPassword !== confirmPassword) {
-                showCustomError('Ops!', 'As senhas não coincidem.');
-                return;
+                throw new Error('As senhas não coincidem.');
             }
 
+            // Verifica força da senha
+            const strength = checkPasswordStrength(newPassword);
+            if (strength < 2) {
+                throw new Error('A senha precisa ser mais forte.');
+            }
+
+            // Atualiza a senha no backend
             const response = await fetch(`${API_URL}/users/reset-password`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    email,
+                    email: email,
                     senha: newPassword
                 })
             });
@@ -243,7 +240,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         } catch (error) {
             console.error('Erro ao redefinir senha:', error);
-            showCustomError('Eita!', error.message);
+            showCustomError('Erro!', error.message);
         }
     });
 

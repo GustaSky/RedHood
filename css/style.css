@@ -306,8 +306,8 @@ button[type="submit"].disabled {
 
 .error-icon,
 .success-icon {
-    width: 120px;
-    height: 120px;
+    width: 150px;
+    height: 150px;
     margin-bottom: 10px;
     object-fit: contain;
 }
@@ -442,8 +442,8 @@ body, input, button, label, a {
 }
 
 .pin-popup .success-icon {
-    width: 120px;
-    height: 120px;
+    width: 150px;
+    height: 150px;
     margin-bottom: 10px;
     object-fit: contain;
 }
@@ -456,12 +456,13 @@ body, input, button, label, a {
 }
 
 .pin-container {
-    margin: 8px auto;
+    margin: 15px auto;
     padding: 5px;
     text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 5px;
 }
 
 #user-pin {
@@ -471,21 +472,37 @@ body, input, button, label, a {
     cursor: pointer;
     transition: all 0.3s ease;
     letter-spacing: 1px;
-    display: inline-block;
     text-align: center;
-}
-
-#user-pin:hover {
-    background-color: #e9ecef;
-    transform: scale(1.05);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    background-color: white;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    display: block;
+    margin: 0 auto;
 }
 
 #copy-feedback {
     font-size: 12px;
     color: #28a745;
-    margin-left: 8px;
-    padding: 3px 6px;
+    opacity: 0;
+    transition: all 0.3s ease;
+    display: block;
+    text-align: center;
+    margin-top: 5px;
+}
+
+.pin-popup .success-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    max-width: 280px;
+    margin: auto;
+}
+
+.pin-popup p {
+    text-align: center;
+    width: 100%;
 }
 
 .pin-info {
