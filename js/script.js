@@ -1,5 +1,5 @@
 // Constantes para API
-const API_URL = 'https://redhood-api-production.up.railway.app/api';
+const API_URL = 'http://localhost:3000/api';
 
 // Elementos DOM
 const userContainer = document.querySelector('.user-container');
@@ -477,8 +477,10 @@ async function handleRegister(userData) {
         const response = await fetch(`${API_URL}/users/register`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             },
+            mode: 'cors',
             body: JSON.stringify({
                 nome: userData.username,
                 email: userData.email,
@@ -486,6 +488,8 @@ async function handleRegister(userData) {
                 data_nascimento: userData.birthdate
             })
         });
+
+        console.log('Resposta do servidor:', response);
 
         const data = await response.json();
 
@@ -495,6 +499,7 @@ async function handleRegister(userData) {
 
         return data;
     } catch (error) {
+        console.error('Erro completo:', error);
         throw error;
     }
 }
