@@ -306,9 +306,10 @@ button[type="submit"].disabled {
 
 .error-icon,
 .success-icon {
-    width: 150px;
-    height: 150px;
-    margin-bottom: 30px;
+    width: 120px;
+    height: 120px;
+    margin-bottom: 10px;
+    object-fit: contain;
 }
 
 .pin-popup strong {
@@ -455,8 +456,12 @@ body, input, button, label, a {
 }
 
 .pin-container {
-    margin: 8px 0;
+    margin: 8px auto;
     padding: 5px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 #user-pin {
@@ -466,6 +471,8 @@ body, input, button, label, a {
     cursor: pointer;
     transition: all 0.3s ease;
     letter-spacing: 1px;
+    display: inline-block;
+    text-align: center;
 }
 
 #user-pin:hover {
